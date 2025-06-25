@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polyphase Systems Quiz</title>
+    <!-- Google Font - Inter for a clean look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles and body background */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to top right, #1e3c72, #2a5298); /* Soft blue gradient */
+            color: #e0e0e0; /* Light text color for contrast */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+
+        /* Main quiz container with glassmorphism */
+        .quiz-container {
+            background-color: rgba(255, 255, 255, 0.15); /* Translucent white */
+            border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); /* Slight 3D depth */
+            backdrop-filter: blur(10px); /* Frosted glass effect */
+            -webkit-backdrop-filter: blur(10px); /* For Safari */
+            padding: 30px;
+            width: 100%;
+            max-width: 700px; /* Max width for larger screens */
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Space between sections */
+            box-sizing: border-box;
+        }
+
+        /* Header for score and progress */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 10px;
+        }
+
+        .score-info, .progress-info {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #fff;
+            padding: 8px 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Progress Bar Styling */
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%; /* Will be updated by JS */
+            background-color: #4CAF50; /* Green for progress */
+            border-radius: 5px;
+            transition: width 0.3s ease-in-out; /* Smooth transition */
+        }
+
+        /* Question and Explanation Area */
+        .question-area {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 120px; /* Ensure consistent height */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 400;
+            line-height: 1.5;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .explanation-text {
+            margin-top: 15px;
+            font-size: 1em;
+            font-weight: 300;
+            color: #ccc;
+        }
+
+        /* Buttons Container */
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px; /* Space between buttons */
+            margin-top: 20px;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+
+        .quiz-button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1); /* Default translucent background */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            flex: 1; /* Allow buttons to grow and shrink */
+            max-width: 150px; /* Max width for buttons */
+        }
+
+        .quiz-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .quiz-button:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .quiz-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+            box-shadow: none;
+        }
+
+        /* Answer feedback colors */
+        .correct {
+            background-color: #4CAF50 !important; /* Green */
+            border-color: #4CAF50 !important;
+        }
+
+        .incorrect {
+            background-color: #F44336 !important; /* Red */
+            border-color: #F44336 !important;
+        }
+
+        /* Next Question Button */
+        .next-button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 25px;
+            background-color: #007bff; /* Blue default */
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .next-button:hover:not(:disabled) {
+            background-color: #0056b3;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .next-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+            box-shadow: none;
+        }
+
+        /* Final Score/Restart Screen */
+        .final-score-container {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        .final-score-container button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            background-color: #28a745; /* Green for restart */
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .final-score-container button:hover {
+            background-color: #218838;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+                align-items: flex-start; /* Align to top on small screens */
+            }
+
+            .quiz-container {
+                padding: 20px;
+                gap: 15px;
+                margin-top: 20px;
+            }
+
+            .quiz-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .score-info, .progress-info {
+                width: 100%;
+                text-align: center;
+                font-size: 1em;
+                padding: 10px;
+            }
+
+            .question-area {
+                font-size: 1.1em;
+                padding: 20px;
+                min-height: 100px;
+            }
+
+            .buttons-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .quiz-button {
+                width: 100%; /* Full width buttons on mobile */
+                max-width: none;
+                padding: 12px 25px;
+                font-size: 1.1em;
+            }
+
+            .next-button {
+                font-size: 1.1em;
+                padding: 12px;
+            }
+
+            .explanation-text {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container" id="quizContainer">
+        <div class="quiz-header">
+            <div class="score-info">Score: <span id="score">0</span></div>
+            <div class="progress-info"><span id="currentQuestionNum">0</span> / <span id="totalQuestions">30</span></div>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="question-area">
+            <div id="questionText"></div>
+            <div id="explanationText" class="explanation-text"></div>
+        </div>
+
+        <div class="buttons-container">
+            <button class="quiz-button" id="trueBtn">True</button>
+            <button class="quiz-button" id="falseBtn">False</button>
+        </div>
+
+        <button class="next-button" id="nextBtn" disabled>Next Question</button>
+    </div>
+
+    <script>
+        // Array of quiz questions, answers, and explanations
+        const questions = [
+            {
+                question: "In a standard three-phase system, the three voltage waveforms are typically separated by 120 electrical degrees from each other.",
+                answer: true,
+                explanation: "This 120-degree phase separation is fundamental to three-phase power, enabling smooth operation and efficient transmission."
+            },
+            {
+                question: "A balanced three-phase system is characterized by equal magnitudes of phase voltages and currents, and a 90-degree phase displacement between them.",
+                answer: false,
+                explanation: "A balanced three-phase system has equal magnitudes and a 120-degree phase displacement between voltage and current waveforms."
+            },
+            {
+                question: "The instantaneous sum of the three phase currents in a balanced three-phase system is always zero.",
+                answer: true,
+                explanation: "Due to the 120-degree phase shift, the sum of the instantaneous values of voltages or currents in a balanced system is always zero."
+            },
+            {
+                question: "Three-phase power transmission generally requires more conductor material than single-phase transmission for the same amount of power delivered.",
+                answer: false,
+                explanation: "Three-phase power is more efficient and requires less conductor material than single-phase for the same power delivery."
+            },
+            {
+                question: "The instantaneous power in a balanced three-phase system pulsates at twice the supply frequency, similar to single-phase power.",
+                answer: false,
+                explanation: "A key advantage of balanced three-phase systems is that the instantaneous power is constant and does not pulsate."
+            },
+            {
+                question: "In a Wye-connected source, the line voltage is $\\sqrt{3}$ times the phase voltage.",
+                answer: true,
+                explanation: "In a Wye configuration, the line voltage is the phasor sum of two phase voltages, resulting in a $\\sqrt{3}$ times magnitude difference."
+            },
+            {
+                question: "For a Wye-connected load, the current flowing through a line is different from the current flowing through its corresponding phase.",
+                answer: false,
+                explanation: "In a Wye connection, the line current is directly the same as the phase current because there is only one path for the current."
+            },
+            {
+                question: "A four-wire Wye system's neutral conductor primarily carries current only when the connected load is unbalanced.",
+                answer: true,
+                explanation: "In a perfectly balanced four-wire Wye system, the sum of phase currents at the neutral point is zero, so no current flows through the neutral wire."
+            },
+            {
+                question: "If one phase of a three-phase Wye-connected motor develops an open circuit, the motor will generally continue to operate normally.",
+                answer: false,
+                explanation: "An open circuit in one phase of a Wye-connected motor will cause it to single-phase, leading to reduced torque, overheating, and potential damage."
+            },
+            {
+                question: "In a Delta-connected system, the line voltage is equal to the phase voltage.",
+                answer: true,
+                explanation: "In a Delta configuration, the line terminals are directly connected across the phase windings, so their voltages are identical."
+            },
+            {
+                question: "For a Delta-connected load, the line current is equal to the phase current.",
+                answer: false,
+                explanation: "In a Delta connection, the line current is $\\sqrt{3}$ times the phase current because currents from two phases combine vectorially to form the line current."
+            },
+            {
+                question: "A standard Delta-connected system inherently provides a neutral point for grounding purposes.",
+                answer: false,
+                explanation: "A standard Delta system is a three-wire configuration and does not naturally provide a neutral point. Special connections are needed for a neutral."
+            },
+            {
+                question: "An 'open Delta' (V-connection) occurs when one winding of a three-phase Delta source is removed, and it can still supply three-phase power.",
+                answer: true,
+                explanation: "An open Delta can still deliver three-phase power, though its capacity is reduced to about 57.7% of a full Delta."
+            },
+            {
+                question: "An unbalanced three-phase system implies that at least one of the phase voltage or current magnitudes is unequal, or their phase angles are not 120 degrees apart.",
+                answer: true,
+                explanation: "Unbalance refers to deviations from ideal balanced conditions, whether in magnitude or phase angle of voltages or currents."
+            },
+            {
+                question: "Symmetrical components is a technique used to simplify the analysis of balanced three-phase systems.",
+                answer: false,
+                explanation: "Symmetrical components is specifically a powerful mathematical tool designed for the analysis of unbalanced three-phase systems."
+            },
+            {
+                question: "In an unbalanced three-wire Wye-connected load, the sum of the three line currents will not necessarily be zero.",
+                answer: true,
+                explanation: "According to Kirchhoff's Current Law, in a three-wire system without a neutral return, the sum of line currents flowing out of the source must still be zero, but the individual phase currents will be unbalanced."
+            },
+            {
+                question: "In a four-wire Wye system with an unbalanced load, the neutral current will be non-zero.",
+                answer: true,
+                explanation: "When a four-wire Wye system has an unbalanced load, the neutral conductor carries the imbalance current, resulting in a non-zero neutral current."
+            },
+            {
+                question: "Unbalanced loads in a Delta system can lead to circulating currents within the Delta windings themselves.",
+                answer: false,
+                explanation: "Unbalanced *source voltages* in a Delta can cause circulating currents. Unbalanced *loads* primarily affect line and phase currents but typically do not cause circulating currents within the Delta windings themselves unless there is an internal impedance imbalance."
+            },
+            {
+                question: "Power factor correction is exclusively applied to balanced three-phase systems.",
+                answer: false,
+                explanation: "Power factor correction is crucial for both balanced and unbalanced systems to improve efficiency, reduce losses, and avoid penalties from utilities."
+            },
+            {
+                question: "Positive sequence components in an unbalanced system represent a balanced set of phasors with the same phase sequence as the original system.",
+                answer: true,
+                explanation: "Positive sequence components are a balanced set of phasors that rotate in the same direction as the original system's phase sequence."
+            },
+            {
+                question: "Negative sequence components represent a balanced set of phasors with a phase sequence opposite to the original system.",
+                answer: true,
+                explanation: "Negative sequence components are a balanced set of phasors that rotate in the opposite direction to the original system's phase sequence."
+            },
+            {
+                question: "Zero sequence components exist only when the sum of the three phase quantities (voltage or current) is non-zero.",
+                answer: true,
+                explanation: "Zero sequence components appear when there is a common component in all three phases, causing their sum to be non-zero, often due to a ground path."
+            },
+            {
+                question: "Three-phase systems are generally preferred over single-phase for high-power industrial applications.",
+                answer: true,
+                explanation: "Three-phase systems provide constant power, higher efficiency, and self-starting capabilities for motors, making them ideal for high-power industrial use."
+            },
+            {
+                question: "A lagging power factor in a three-phase system indicates that the current is leading the voltage.",
+                answer: false,
+                explanation: "A lagging power factor means the current waveform is *lagging* (following) the voltage waveform, common with inductive loads like motors."
+            },
+            {
+                question: "The total real power in a balanced three-phase system (Wye or Delta) is given by $P = \\sqrt{3} V_L I_L \\cos\\theta$, where $\\theta$ is the phase angle between phase voltage and phase current.",
+                answer: true,
+                explanation: "This formula is universally applicable for calculating total real power in a balanced three-phase system, using line quantities and the power factor angle."
+            },
+            {
+                question: "In a balanced three-phase system, the apparent power for the entire system is simply the sum of the apparent power of each phase.",
+                answer: true,
+                explanation: "For balanced systems, total apparent power (S) is three times the apparent power per phase, or $S = \\sqrt{3}V_L I_L$."
+            },
+            {
+                question: "A common application of a Delta-Wye transformer connection is to step down voltage while simultaneously providing a neutral for single-phase loads.",
+                answer: true,
+                explanation: "Delta-Wye transformers are widely used for stepping down transmission voltages for distribution, as the Wye secondary provides a convenient neutral point."
+            },
+            {
+                question: "If a three-phase motor is designed for a specific phase sequence, reversing any two of the three supply lines will reverse its direction of rotation.",
+                answer: true,
+                explanation: "Reversing any two phases changes the phase sequence, which in turn reverses the direction of the rotating magnetic field, thus reversing motor rotation."
+            },
+            {
+                question: "Harmonics are not a concern in three-phase systems, as they are inherently balanced.",
+                answer: false,
+                explanation: "Non-linear loads in three-phase systems (e.g., rectifiers, VFDs) can generate significant harmonics, which can cause problems like overheating and waveform distortion."
+            },
+            {
+                question: "Grounding in three-phase systems is primarily for equipment protection and safety.",
+                answer: true,
+                explanation: "Grounding provides a path for fault currents, protects personnel from electric shock, and stabilizes system voltages relative to ground."
+            }
+        ];
+
+        // Get DOM elements
+        const quizContainer = document.getElementById('quizContainer');
+        const questionText = document.getElementById('questionText');
+        const explanationText = document.getElementById('explanationText');
+        const trueBtn = document.getElementById('trueBtn');
+        const falseBtn = document.getElementById('falseBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const scoreDisplay = document.getElementById('score');
+        const currentQuestionNumDisplay = document.getElementById('currentQuestionNum');
+        const totalQuestionsDisplay = document.getElementById('totalQuestions');
+        const progressBar = document.getElementById('progressBar');
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answeredCurrentQuestion = false; // Flag to check if current question is answered
+
+        /**
+         * Initializes the quiz or resets it to the first question.
+         */
+        function initializeQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            answeredCurrentQuestion = false;
+            totalQuestionsDisplay.textContent = questions.length;
+            loadQuestion();
+            // Show the quiz container if it was hidden (e.g., after final score)
+            quizContainer.style.display = 'flex';
+        }
+
+        /**
+         * Loads the current question into the display.
+         * Updates score, progress, resets button styles, and disables next button.
+         */
+        function loadQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                const questionData = questions[currentQuestionIndex];
+                questionText.innerHTML = questionData.question; // Use innerHTML for LaTeX
+                explanationText.textContent = ''; // Clear previous explanation
+                explanationText.style.display = 'none'; // Hide explanation initially
+
+                // Reset button styles
+                trueBtn.classList.remove('correct', 'incorrect');
+                falseBtn.classList.remove('correct', 'incorrect');
+                trueBtn.disabled = false;
+                falseBtn.disabled = false;
+
+                nextBtn.disabled = true; // Disable next button until answered
+                answeredCurrentQuestion = false;
+
+                updateProgress();
+            } else {
+                showFinalScore();
+            }
+        }
+
+        /**
+         * Updates the score display and the progress bar.
+         */
+        function updateProgress() {
+            scoreDisplay.textContent = score;
+            currentQuestionNumDisplay.textContent = currentQuestionIndex;
+            const progressPercentage = (currentQuestionIndex / questions.length) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        /**
+         * Checks the user's answer, provides feedback, and updates score.
+         * @param {boolean} userAnswer - The user's selected answer (true or false).
+         */
+        function checkAnswer(userAnswer) {
+            if (answeredCurrentQuestion) return; // Prevent multiple clicks
+
+            answeredCurrentQuestion = true;
+            const questionData = questions[currentQuestionIndex];
+            const correctAnswer = questionData.answer;
+
+            let selectedButton = userAnswer ? trueBtn : falseBtn;
+            let otherButton = userAnswer ? falseBtn : trueBtn;
+
+            if (userAnswer === correctAnswer) {
+                selectedButton.classList.add('correct');
+                score++;
+            } else {
+                selectedButton.classList.add('incorrect');
+                // Highlight correct answer in green, even if user chose wrong
+                (correctAnswer ? trueBtn : falseBtn).classList.add('correct');
+            }
+
+            // Display explanation
+            explanationText.textContent = questionData.explanation;
+            explanationText.style.display = 'block';
+
+            // Disable buttons after answer
+            trueBtn.disabled = true;
+            falseBtn.disabled = true;
+            nextBtn.disabled = false; // Enable next button
+            updateProgress(); // Update score immediately
+        }
+
+        /**
+         * Advances to the next question or shows the final score.
+         */
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        /**
+         * Displays the final score and a restart button.
+         */
+        function showFinalScore() {
+            quizContainer.innerHTML = `
+                <div class="final-score-container">
+                    <h2>Quiz Completed!</h2>
+                    <p>Your final score: ${score} out of ${questions.length}</p>
+                    <button id="restartBtn">Start Again</button>
+                </div>
+            `;
+            document.getElementById('restartBtn').addEventListener('click', initializeQuiz);
+        }
+
+        // Add event listeners
+        trueBtn.addEventListener('click', () => checkAnswer(true));
+        falseBtn.addEventListener('click', () => checkAnswer(false));
+        nextBtn.addEventListener('click', nextQuestion);
+
+        // Initialize the quiz when the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', initializeQuiz);
+
+        // Basic MathJax-like rendering for LaTeX
+        // This is a very simple custom renderer for the purpose of this demo
+        // For full LaTeX rendering, a library like MathJax would be needed,
+        // but the prompt specified "no libraries or frameworks".
+        // This attempts to replace \\sqrt{3} with unicode sqrt(3) etc.
+        function renderLatex() {
+            const elements = document.querySelectorAll('#questionText, .explanation-text');
+            elements.forEach(el => {
+                let text = el.innerHTML;
+                text = text.replace(/\\\\sqrt\{3\}/g, '&radic;3');
+                text = text.replace(/\$/g, ''); // Remove dollar signs
+                el.innerHTML = text;
+            });
+        }
+
+        // Call renderLatex after each question load or on DOMContentLoaded
+        // Modified loadQuestion to include renderLatex at the end
+        const originalLoadQuestion = loadQuestion;
+        loadQuestion = function() {
+            originalLoadQuestion.apply(this, arguments); // Call the original loadQuestion
+            // Give a small delay for content to update before trying to render
+            setTimeout(renderLatex, 50);
+        };
+
+        // Also ensure initial load processes LaTeX
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeQuiz();
+            renderLatex();
+        });
+
+
+    </script>
+</body>
+</html>
